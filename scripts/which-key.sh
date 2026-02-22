@@ -168,7 +168,7 @@ handle_key() {
                     exit 0
                     ;;
                 tmux)
-                    tmux $command
+                    tmux run-shell -b "sleep 0.1 && tmux $command"
                     exit 0
                     ;;
                 script)
