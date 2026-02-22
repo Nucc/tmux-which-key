@@ -83,10 +83,30 @@ Set these in your `~/.tmux.conf` before loading the plugin:
 Example:
 
 ```tmux
-set -g @which-key-trigger 'Space'
+set -g @which-key-config '~/.config/tmux-which-key/config.json'
 set -g @which-key-popup-height '20'
 set -g @which-key-popup-width '120'
 set -g @plugin 'Nucc/tmux-which-key'
+```
+
+### Custom Key Binding
+
+By default the plugin binds `prefix + Space`. You can override this with `@which-key-trigger`, or create your own binding entirely in `~/.tmux.conf`.
+
+To bind `Ctrl-Space` directly (no prefix needed):
+
+```tmux
+# Disable the default prefix binding
+set -g @which-key-trigger 'None'
+
+# Bind Ctrl-Space directly (-n = no prefix)
+bind-key -n C-Space run-shell 'tmux display-popup -E -h 16 -w 100 -x C -y S -S "fg=#4C566A" -s "bg=#2E3440" "~/.tmux/plugins/tmux-which-key/scripts/which-key.sh #{pane_id}"'
+```
+
+To use a custom config with a manual binding:
+
+```tmux
+bind-key -n C-Space run-shell 'tmux display-popup -E -h 16 -w 100 -x C -y S -S "fg=#4C566A" -s "bg=#2E3440" "~/.tmux/plugins/tmux-which-key/scripts/which-key.sh --config ~/.config/tmux-which-key/config.json #{pane_id}"'
 ```
 
 ### Custom Config File
