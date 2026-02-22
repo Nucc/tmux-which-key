@@ -44,7 +44,7 @@
         { "key": "n", "type": "tmux", "command": "new-window -c '#{pane_current_path}'", "description": "New window" },
         { "key": "x", "type": "tmux", "command": "confirm-before -p 'Kill window? (y/n)' kill-window", "description": "Kill window" },
         { "key": "r", "type": "tmux", "command": "command-prompt -I '#W' 'rename-window \"%%\"'", "description": "Rename" },
-        { "key": "f", "type": "tmux", "command": "command-prompt -p 'Find:' 'find-window -Z \"%%\"'", "description": "Find window" },
+        { "key": "f", "type": "popup", "command": "tmux list-windows -a -F '#S:#I  #{window_name}  [#{pane_current_command}]' | less", "description": "Find window" },
         { "key": "l", "type": "tmux", "command": "last-window", "description": "Last window" },
         { "key": ".", "type": "tmux", "command": "next-window", "description": "Next" },
         { "key": ",", "type": "tmux", "command": "previous-window", "description": "Previous" },
