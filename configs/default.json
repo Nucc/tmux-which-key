@@ -76,13 +76,13 @@
       "type": "group",
       "description": "buffer",
       "items": [
-        { "key": "l", "type": "tmux", "command": "list-buffers", "description": "List buffers" },
+        { "key": "l", "type": "popup", "command": "tmux list-buffers | less", "description": "List buffers" },
         { "key": "p", "type": "tmux", "command": "paste-buffer", "description": "Paste" },
         { "key": "c", "type": "tmux", "command": "choose-buffer", "description": "Choose buffer" },
         { "key": "d", "type": "tmux", "command": "delete-buffer", "description": "Delete buffer" },
         { "key": "s", "type": "tmux", "command": "command-prompt -p 'Save to:' 'save-buffer \"%%\"'", "description": "Save to file" },
         { "key": "L", "type": "tmux", "command": "command-prompt -p 'Load from:' 'load-buffer \"%%\"'", "description": "Load from file" },
-        { "key": "v", "type": "tmux", "command": "show-buffer", "description": "Show buffer" },
+        { "key": "v", "type": "popup", "command": "tmux show-buffer | less", "description": "Show buffer" },
         { "key": "y", "type": "tmux", "command": "copy-mode", "description": "Copy mode" },
         { "key": "C", "type": "tmux", "command": "capture-pane", "description": "Capture pane" }
       ]
