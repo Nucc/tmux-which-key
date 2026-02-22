@@ -1,0 +1,63 @@
+{
+  "items": [
+    {
+      "key": "g",
+      "type": "group",
+      "description": "git",
+      "items": [
+        { "key": "s", "type": "action", "command": "git status", "description": "Status" },
+        { "key": "d", "type": "action", "command": "git diff", "description": "Diff" },
+        { "key": "l", "type": "action", "command": "git log --oneline -20", "description": "Log (20)" },
+        { "key": "p", "type": "action", "command": "git push", "description": "Push" },
+        { "key": "P", "type": "action", "command": "git pull", "description": "Pull" },
+        { "key": "b", "type": "action", "command": "git branch -a", "description": "Branches" },
+        { "key": "f", "type": "action", "command": "git fetch --all", "description": "Fetch all" },
+        { "key": "a", "type": "action", "command": "git add -p", "description": "Add (patch)" },
+        { "key": "c", "type": "action", "command": "git commit", "description": "Commit" },
+        { "key": "r", "type": "action", "command": "git rebase --continue", "description": "Rebase continue" }
+      ]
+    },
+    {
+      "key": "w",
+      "type": "group",
+      "description": "window",
+      "items": [
+        { "key": "v", "type": "tmux", "command": "split-window -h -c '#{pane_current_path}'", "description": "Split vertical" },
+        { "key": "s", "type": "tmux", "command": "split-window -v -c '#{pane_current_path}'", "description": "Split horizontal" },
+        { "key": "z", "type": "tmux", "command": "resize-pane -Z", "description": "Zoom toggle" },
+        { "key": "n", "type": "tmux", "command": "new-window -c '#{pane_current_path}'", "description": "New window" },
+        { "key": "c", "type": "tmux", "command": "kill-pane", "description": "Close pane" },
+        { "key": "h", "type": "tmux", "command": "select-pane -L", "description": "Pane left" },
+        { "key": "j", "type": "tmux", "command": "select-pane -D", "description": "Pane down" },
+        { "key": "k", "type": "tmux", "command": "select-pane -U", "description": "Pane up" },
+        { "key": "l", "type": "tmux", "command": "select-pane -R", "description": "Pane right" }
+      ]
+    },
+    {
+      "key": "s",
+      "type": "group",
+      "description": "session",
+      "items": [
+        { "key": "n", "type": "tmux", "command": "new-session", "description": "New session" },
+        { "key": "d", "type": "tmux", "command": "detach-client", "description": "Detach" },
+        { "key": "s", "type": "tmux", "command": "choose-session", "description": "Choose session" },
+        { "key": "r", "type": "tmux", "command": "command-prompt -I '#S' 'rename-session \"%%\"'", "description": "Rename session" },
+        { "key": "k", "type": "tmux", "command": "confirm-before -p 'Kill session? (y/n)' kill-session", "description": "Kill session" }
+      ]
+    },
+    {
+      "key": "b",
+      "type": "group",
+      "description": "buffer",
+      "items": [
+        { "key": "l", "type": "tmux", "command": "list-buffers", "description": "List buffers" },
+        { "key": "p", "type": "tmux", "command": "paste-buffer", "description": "Paste buffer" },
+        { "key": "c", "type": "tmux", "command": "choose-buffer", "description": "Choose buffer" }
+      ]
+    },
+    { "key": ":", "type": "tmux", "command": "command-prompt", "description": "Command prompt" },
+    { "key": "r", "type": "tmux", "command": "source-file ~/.tmux.conf \\; display-message 'Config reloaded'", "description": "Reload config" },
+    { "key": "?", "type": "tmux", "command": "list-keys", "description": "List keybindings" },
+    { "key": "c", "type": "action", "command": "clear", "description": "Clear screen" }
+  ]
+}
