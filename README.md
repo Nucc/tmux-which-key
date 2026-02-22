@@ -5,6 +5,8 @@ A LazyVim-style which-key popup for tmux. Press a trigger key to open a discover
 ![Nord theme](https://img.shields.io/badge/theme-Nord-88C0D0?style=flat-square)
 ![tmux](https://img.shields.io/badge/tmux-3.3+-green?style=flat-square)
 
+![tmux-which-key screenshot](https://gist.githubusercontent.com/Nucc/2eb50f2a324d8e79a8f231b16cdb3b4f/raw/screenshot.png)
+
 ## Features
 
 - **Discoverable keybindings** - see all available commands at a glance
