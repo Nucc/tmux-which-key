@@ -183,18 +183,96 @@ The config file is a JSON object with a top-level `items` array. Each item has:
 
 ## Default Keybindings
 
-The built-in default config includes:
+The built-in default config provides ~75 commands organized into 8 groups plus standalone items. Press `prefix + Space` to open the root menu:
+
+### Root Menu
 
 | Key | Type | Description |
 |-----|------|-------------|
+| `p` | group | **Pane** - split, navigate, zoom, swap, resize, and more |
+| `w` | group | **Window** - create, kill, rename, find, navigate, move |
+| `s` | group | **Session** - create, detach, choose, rename, kill, switch |
+| `b` | group | **Buffer** - list, paste, choose, save/load, copy mode |
+| `l` | group | **Layout** - cycle layouts and select presets |
+| `C` | group | **Client** - list, choose, detach, refresh, lock |
+| `o` | group | **Options** - show/set options, environment, messages |
 | `g` | group | **Git** - status, diff, log, push, pull, branches, fetch, add, commit, rebase |
-| `w` | group | **Window** - split, zoom, new, close, pane navigation (hjkl) |
-| `s` | group | **Session** - new, detach, choose, rename, kill |
-| `b` | group | **Buffer** - list, paste, choose |
 | `:` | tmux | Command prompt |
 | `r` | tmux | Reload tmux config |
 | `?` | tmux | List all keybindings |
 | `c` | action | Clear screen |
+| `t` | tmux | Clock mode |
+| `d` | tmux | Display panes |
+
+### Pane (`p`)
+
+| Key | Description | Key | Description |
+|-----|-------------|-----|-------------|
+| `v` | Split vertical | `s` | Split horizontal |
+| `h/j/k/l` | Navigate panes | `z` | Zoom toggle |
+| `x` | Kill pane | `o` | Last pane |
+| `!` | Break to window | `J` | Join pane |
+| `m/M` | Mark/unmark pane | `{/}` | Swap up/down |
+| `c` | Clear history | `q` | Capture to buffer |
+| `p` | Respawn pane | `r` | **+Resize** (subgroup) |
+
+### Window (`w`)
+
+| Key | Description | Key | Description |
+|-----|-------------|-----|-------------|
+| `n` | New window | `x` | Kill window |
+| `r` | Rename | `f` | Find window |
+| `l` | Last window | `.` | Next window |
+| `,` | Previous window | `w` | Choose window |
+| `m` | Move window | `s` | Swap window |
+| `R` | Rotate panes | | |
+
+### Session (`s`)
+
+| Key | Description | Key | Description |
+|-----|-------------|-----|-------------|
+| `n` | New session | `d` | Detach |
+| `s` | Choose session | `w` | Choose tree |
+| `r` | Rename | `k` | Kill session |
+| `l` | List sessions | `L` | Lock session |
+| `(` | Previous session | `)` | Next session |
+
+### Buffer (`b`)
+
+| Key | Description | Key | Description |
+|-----|-------------|-----|-------------|
+| `l` | List buffers | `p` | Paste |
+| `c` | Choose buffer | `d` | Delete buffer |
+| `s` | Save to file | `L` | Load from file |
+| `v` | Show buffer | `y` | Copy mode |
+| `C` | Capture pane | | |
+
+### Layout (`l`)
+
+| Key | Description | Key | Description |
+|-----|-------------|-----|-------------|
+| `n` | Next layout | `p` | Previous layout |
+| `1` | Even horizontal | `2` | Even vertical |
+| `3` | Main horizontal | `4` | Main vertical |
+| `5` | Tiled | | |
+
+### Client (`C`)
+
+| Key | Description | Key | Description |
+|-----|-------------|-----|-------------|
+| `l` | List clients | `c` | Choose client |
+| `d` | Detach | `D` | Detach other |
+| `r` | Refresh | `s` | Suspend |
+| `L` | Lock | | |
+
+### Options (`o`)
+
+| Key | Description | Key | Description |
+|-----|-------------|-----|-------------|
+| `g` | Show global options | `w` | Show window options |
+| `e` | Show environment | `s` | Set global option |
+| `c` | Customize mode | `m` | Show messages |
+| `k` | List commands | | |
 
 ## License
 
