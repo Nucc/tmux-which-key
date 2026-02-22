@@ -14,7 +14,7 @@ A LazyVim-style which-key popup for tmux. Press a trigger key to open a discover
 - **Breadcrumb navigation** - always know where you are in the menu tree
 - **Nord color theme** - clean, readable color scheme using 24-bit true color
 - **JSON configuration** - easy to customize, extend, and share
-- **Four action types** - shell commands, tmux commands, external scripts, and nested groups
+- **Five action types** - shell commands (with optional auto-execute), tmux commands, external scripts, popups, and nested groups
 - **Single-keystroke input** - no Enter key required, instant response
 
 ## Requirements
@@ -136,19 +136,21 @@ The config file is a JSON object with a top-level `items` array. Each item has:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `key` | string | yes | Single character that triggers this item |
-| `type` | string | yes | One of: `group`, `action`, `tmux`, `script` |
+| `type` | string | yes | One of: `group`, `action`, `tmux`, `script`, `popup` |
 | `description` | string | yes | Label shown in the menu |
 | `command` | string | for non-groups | Command to execute |
 | `items` | array | for groups | Nested items in this group |
+| `immediate` | boolean | no | For `action` type: also press Enter after pasting (default: `false`) |
 
 ### Action Types
 
 | Type | Behavior | Example |
 |------|----------|---------|
 | `group` | Opens a submenu with nested items | Navigate to git commands |
-| `action` | Sends text to the active pane (as if typed) | `git status` |
+| `action` | Sends text to the active pane (as if typed). With `"immediate": true`, also presses Enter. | `git status` |
 | `tmux` | Executes a tmux command directly | `split-window -h` |
 | `script` | Runs a shell script via `tmux run-shell` | `~/scripts/my-script.sh` |
+| `popup` | Opens command in a temporary `display-popup` at the pane's working directory. Closes on exit or Escape. | `lazygit` |
 
 ### Example Config
 
@@ -160,9 +162,9 @@ The config file is a JSON object with a top-level `items` array. Each item has:
       "type": "group",
       "description": "git",
       "items": [
-        { "key": "s", "type": "action", "command": "git status", "description": "Status" },
-        { "key": "p", "type": "action", "command": "git push", "description": "Push" },
-        { "key": "l", "type": "action", "command": "git log --oneline -20", "description": "Log" }
+        { "key": "s", "type": "action", "command": "git status", "description": "Status", "immediate": true },
+        { "key": "c", "type": "action", "command": "git commit", "description": "Commit" },
+        { "key": "g", "type": "popup", "command": "lazygit", "description": "Lazygit" }
       ]
     },
     {
@@ -175,7 +177,7 @@ The config file is a JSON object with a top-level `items` array. Each item has:
       ]
     },
     { "key": "r", "type": "tmux", "command": "source-file ~/.tmux.conf \\; display-message 'Config reloaded'", "description": "Reload config" },
-    { "key": "e", "type": "action", "command": "nvim .", "description": "Open editor" },
+    { "key": "h", "type": "popup", "command": "htop", "description": "System monitor" },
     { "key": "d", "type": "script", "command": "~/scripts/deploy.sh", "description": "Deploy" }
   ]
 }

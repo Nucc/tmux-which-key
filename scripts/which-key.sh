@@ -59,14 +59,14 @@ CONFIG=$(cat "$CONFIG_FILE")
 # Navigation stack (jq path indices)
 NAV_STACK=()
 
-# Get current items as tab-separated lines: key\ttype\tdescription\tcommand
+# Get current items as tab-separated lines: key\ttype\tdescription\tcommand\timmediate
 # Single jq call per menu level instead of per-item
 get_current_items() {
     local path=".items"
     for idx in "${NAV_STACK[@]}"; do
         path="${path}[${idx}].items"
     done
-    echo "$CONFIG" | jq -r "${path}[] | [.key, .type, .description, (.command // \"\")] | @tsv" 2>/dev/null
+    echo "$CONFIG" | jq -r "${path}[] | [.key, .type, .description, (.command // \"\"), (if .immediate then \"true\" else \"false\" end)] | @tsv" 2>/dev/null
 }
 
 get_breadcrumb() {
@@ -147,7 +147,7 @@ handle_key() {
     local keypress="$1"
     local i=0
 
-    while IFS=$'\t' read -r key type desc command; do
+    while IFS=$'\t' read -r key type desc command immediate; do
         if [[ "$key" == "$keypress" ]]; then
             case "$type" in
                 group)
@@ -156,6 +156,15 @@ handle_key() {
                     ;;
                 action)
                     tmux send-keys -t "$PANE_ID" -l "$command"
+                    if [[ "$immediate" == "true" ]]; then
+                        tmux send-keys -t "$PANE_ID" Enter
+                    fi
+                    exit 0
+                    ;;
+                popup)
+                    local pane_path
+                    pane_path=$(tmux display-message -t "$PANE_ID" -p '#{pane_current_path}')
+                    tmux run-shell -b "sleep 0.1 && tmux display-popup -E -h 80% -w 80% -d '$pane_path' '$command'"
                     exit 0
                     ;;
                 tmux)

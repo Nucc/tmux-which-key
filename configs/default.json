@@ -134,13 +134,13 @@
       "type": "group",
       "description": "git",
       "items": [
-        { "key": "s", "type": "action", "command": "git status", "description": "Status" },
-        { "key": "d", "type": "action", "command": "git diff", "description": "Diff" },
-        { "key": "l", "type": "action", "command": "git log --oneline -20", "description": "Log (20)" },
-        { "key": "p", "type": "action", "command": "git push", "description": "Push" },
-        { "key": "P", "type": "action", "command": "git pull", "description": "Pull" },
-        { "key": "b", "type": "action", "command": "git branch -a", "description": "Branches" },
-        { "key": "f", "type": "action", "command": "git fetch --all", "description": "Fetch all" },
+        { "key": "s", "type": "action", "command": "git status", "description": "Status", "immediate": true },
+        { "key": "d", "type": "action", "command": "git diff", "description": "Diff", "immediate": true },
+        { "key": "l", "type": "action", "command": "git log --oneline -20", "description": "Log (20)", "immediate": true },
+        { "key": "p", "type": "action", "command": "git push", "description": "Push", "immediate": true },
+        { "key": "P", "type": "action", "command": "git pull", "description": "Pull", "immediate": true },
+        { "key": "b", "type": "action", "command": "git branch -a", "description": "Branches", "immediate": true },
+        { "key": "f", "type": "action", "command": "git fetch --all", "description": "Fetch all", "immediate": true },
         { "key": "a", "type": "action", "command": "git add -p", "description": "Add (patch)" },
         { "key": "c", "type": "action", "command": "git commit", "description": "Commit" },
         { "key": "r", "type": "action", "command": "git rebase --continue", "description": "Rebase continue" }
@@ -149,7 +149,7 @@
     { "key": ":", "type": "tmux", "command": "command-prompt", "description": "Command prompt" },
     { "key": "r", "type": "tmux", "command": "source-file ~/.tmux.conf \\; display-message 'Config reloaded'", "description": "Reload config" },
     { "key": "?", "type": "tmux", "command": "list-keys", "description": "List keybindings" },
-    { "key": "c", "type": "action", "command": "clear", "description": "Clear screen" },
+    { "key": "c", "type": "action", "command": "clear", "description": "Clear screen", "immediate": true },
     { "key": "t", "type": "tmux", "command": "clock-mode", "description": "Clock mode" },
     { "key": "d", "type": "tmux", "command": "display-panes", "description": "Display panes" }
   ]
