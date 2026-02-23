@@ -168,7 +168,14 @@ handle_key() {
                     exit 0
                     ;;
                 tmux)
-                    tmux run-shell -b "sleep 0.1 && tmux $command"
+                    case "$command" in
+                        choose-*|command-prompt*|customize-mode*|copy-mode*)
+                            tmux run-shell -b "sleep 0.1 && tmux $command"
+                            ;;
+                        *)
+                            tmux $command
+                            ;;
+                    esac
                     exit 0
                     ;;
                 script)

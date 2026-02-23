@@ -148,7 +148,7 @@
     },
     { "key": ":", "type": "tmux", "command": "command-prompt", "description": "Command prompt" },
     { "key": "r", "type": "tmux", "command": "source-file ~/.tmux.conf \\; display-message 'Config reloaded'", "description": "Reload config" },
-    { "key": "?", "type": "tmux", "command": "list-keys", "description": "List keybindings" },
+    { "key": "?", "type": "popup", "command": "tmux list-keys | less", "description": "List keybindings" },
     { "key": "c", "type": "action", "command": "clear", "description": "Clear screen", "immediate": true },
     { "key": "t", "type": "tmux", "command": "clock-mode", "description": "Clock mode" },
     { "key": "d", "type": "tmux", "command": "display-panes", "description": "Display panes" }
