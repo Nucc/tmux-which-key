@@ -241,7 +241,7 @@ handle_key() {
                     ;;
                 tmux)
                     case "$command" in
-                        choose-*|command-prompt*|customize-mode*|copy-mode*)
+                        choose-*|command-prompt*|customize-mode*|copy-mode*|display-panes*)
                             run_tmux_command_delayed "$command"
                             ;;
                         *)
