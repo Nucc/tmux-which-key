@@ -53,6 +53,7 @@ main() {
     popup_cmd+=" -x $popup_x -y $popup_y"
     popup_cmd+=" -S 'fg=$popup_fg' -s 'bg=$popup_bg'"
     popup_cmd+=" '$CURRENT_DIR/scripts/which-key.sh $config_flag --pane #{pane_id} --window #{window_id} --session #{session_id} --client #{client_name}'"
+    popup_cmd="{ $popup_cmd; rc=\$?; [ \$rc -eq 129 ] || exit \$rc; }"
 
     tmux bind-key "$trigger" run-shell "$popup_cmd"
 }
