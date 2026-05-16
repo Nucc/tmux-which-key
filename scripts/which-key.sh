@@ -10,6 +10,7 @@ PANE_ID=""
 WINDOW_ID=""
 SESSION_ID=""
 CLIENT_ID=""
+EXECUTE_ACTION=""
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -34,12 +35,50 @@ while [[ $# -gt 0 ]]; do
             CLIENT_ID="$2"
             shift 2
             ;;
+        --execute)
+            EXECUTE_ACTION="$2"
+            shift 2
+            ;;
         *)
             PANE_ID="$1"
             shift
             ;;
     esac
 done
+
+execute_kill_session() {
+    local session_count
+
+    if [[ -z "$SESSION_ID" ]]; then
+        echo "Missing --session for kill-session"
+        exit 1
+    fi
+
+    if ! tmux has-session -t "$SESSION_ID" 2>/dev/null; then
+        exit 0
+    fi
+
+    session_count=$(tmux list-sessions 2>/dev/null | wc -l | tr -d ' ')
+    if [[ -n "$CLIENT_ID" && "$session_count" -gt 1 ]]; then
+        tmux switch-client -c "$CLIENT_ID" -n
+        sleep 0.1
+    fi
+
+    tmux kill-session -t "$SESSION_ID"
+}
+
+if [[ -n "$EXECUTE_ACTION" ]]; then
+    case "$EXECUTE_ACTION" in
+        kill-session)
+            execute_kill_session
+            ;;
+        *)
+            echo "Unknown internal action: $EXECUTE_ACTION"
+            exit 1
+            ;;
+    esac
+    exit 0
+fi
 
 # Resolve config file: explicit > XDG > user home > plugin default
 if [[ -z "$CONFIG_FILE" ]]; then
@@ -148,6 +187,25 @@ run_tmux_command_delayed() {
     tmux run-shell -b "sleep 0.1; tmux source-file $quoted_file; rm -f $quoted_file"
 }
 
+run_internal_action() {
+    local action="$1"
+    local script_path quoted_script quoted_action quoted_client quoted_session
+    script_path="$PLUGIN_DIR/scripts/which-key.sh"
+    quoted_script=$(shell_quote "$script_path")
+    quoted_action=$(shell_quote "$action")
+    quoted_client=$(shell_quote "$CLIENT_ID")
+    quoted_session=$(shell_quote "$SESSION_ID")
+
+    case "$action" in
+        kill-session)
+            run_tmux_command_delayed "confirm-before -t $CLIENT_ID -p 'Kill session? (y/n)' 'run-shell -b \"$quoted_script --execute $quoted_action --client $quoted_client --session $quoted_session\"'"
+            ;;
+        *)
+            tmux display-message -t "$PANE_ID" "Unknown internal action: $action"
+            ;;
+    esac
+}
+
 render_menu() {
     clear
 
@@ -253,6 +311,10 @@ handle_key() {
                     ;;
                 script)
                     tmux run-shell "$command"
+                    exit 0
+                    ;;
+                internal)
+                    run_internal_action "$command"
                     exit 0
                     ;;
             esac
