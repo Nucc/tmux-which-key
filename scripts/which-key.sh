@@ -189,19 +189,36 @@ run_tmux_command_delayed() {
 
 run_internal_action() {
     local action="$1"
-    local script_path quoted_script quoted_action quoted_client quoted_session
-    script_path="$PLUGIN_DIR/scripts/which-key.sh"
-    quoted_script=$(shell_quote "$script_path")
-    quoted_action=$(shell_quote "$action")
-    quoted_client=$(shell_quote "$CLIENT_ID")
-    quoted_session=$(shell_quote "$SESSION_ID")
 
     case "$action" in
         kill-session)
-            run_tmux_command_delayed "confirm-before -t $CLIENT_ID -p 'Kill session? (y/n)' 'run-shell -b \"$quoted_script --execute $quoted_action --client $quoted_client --session $quoted_session\"'"
+            confirm_kill_session
             ;;
         *)
             tmux display-message -t "$PANE_ID" "Unknown internal action: $action"
+            ;;
+    esac
+}
+
+confirm_kill_session() {
+    local keypress script_path quoted_script quoted_client quoted_session
+
+    clear
+    printf "%s  Which Key%s  %s│%s  %sKill session?%s\n" "$C_HDR" "$C_R" "$C_SEP" "$C_R" "$C_DESC" "$C_R"
+    printf "%s" "$C_SEP"
+    printf '%.0s─' {1..98}
+    printf "%s\n\n" "$C_R"
+    printf "  %sThis will kill the current session.%s\n\n" "$C_DESC" "$C_R"
+    printf "  %sy%s  confirm    %sn%s/%sesc%s  cancel\n" "$C_KEY" "$C_R" "$C_KEY" "$C_R" "$C_KEY" "$C_R"
+
+    IFS= read -rsn1 keypress
+    case "$keypress" in
+        y|Y)
+            script_path="$PLUGIN_DIR/scripts/which-key.sh"
+            quoted_script=$(shell_quote "$script_path")
+            quoted_client=$(shell_quote "$CLIENT_ID")
+            quoted_session=$(shell_quote "$SESSION_ID")
+            tmux run-shell -b "sleep 0.1; $quoted_script --execute kill-session --client $quoted_client --session $quoted_session"
             ;;
     esac
 }
