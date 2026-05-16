@@ -120,14 +120,32 @@ expand_command() {
     echo "$command"
 }
 
-run_tmux_command() {
+shell_quote() {
+    local value="$1"
+    printf "'%s'" "${value//\'/\'\\\'\'}"
+}
+
+write_tmux_command_file() {
     local command="$1"
     local command_file
     command="${command//\\;/;}"
     command_file=$(mktemp "${TMPDIR:-/tmp}/tmux-which-key.XXXXXX") || return 1
     printf '%s\n' "$command" > "$command_file"
+    echo "$command_file"
+}
+
+run_tmux_command() {
+    local command_file
+    command_file=$(write_tmux_command_file "$1") || return 1
     tmux source-file "$command_file"
     rm -f "$command_file"
+}
+
+run_tmux_command_delayed() {
+    local command_file quoted_file
+    command_file=$(write_tmux_command_file "$1") || return 1
+    quoted_file=$(shell_quote "$command_file")
+    tmux run-shell -b "sleep 0.1; tmux source-file $quoted_file; rm -f $quoted_file"
 }
 
 render_menu() {
@@ -224,10 +242,7 @@ handle_key() {
                 tmux)
                     case "$command" in
                         choose-*|command-prompt*|customize-mode*|copy-mode*)
-                            (
-                                sleep 0.1
-                                run_tmux_command "$command"
-                            ) &
+                            run_tmux_command_delayed "$command"
                             ;;
                         *)
                             run_tmux_command "$command"
