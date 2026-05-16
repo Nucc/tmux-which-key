@@ -232,16 +232,17 @@ handle_key() {
                     ;;
                 popup)
                     local pane_path
+                    local quoted_command
+                    local quoted_pane_path
                     pane_path=$(tmux display-message -t "$PANE_ID" -p '#{pane_current_path}')
-                    (
-                        sleep 0.1
-                        tmux display-popup -E -h 80% -w 80% -d "$pane_path" "$command"
-                    ) &
+                    quoted_command=$(shell_quote "$command")
+                    quoted_pane_path=$(shell_quote "$pane_path")
+                    tmux run-shell -b "sleep 0.1; tmux display-popup -E -h 80% -w 80% -d $quoted_pane_path $quoted_command"
                     exit 0
                     ;;
                 tmux)
                     case "$command" in
-                        choose-*|command-prompt*|customize-mode*|copy-mode*|display-panes*)
+                        choose-*|command-prompt*|confirm-before*|customize-mode*|copy-mode*|clock-mode*|display-panes*|*display-message*)
                             run_tmux_command_delayed "$command"
                             ;;
                         *)
