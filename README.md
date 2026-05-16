@@ -1,6 +1,6 @@
 # tmux-which-key
 
-A LazyVim-style which-key popup for tmux. Press a trigger key to open a discoverable, keyboard-driven command menu with nested groups, breadcrumb navigation, and Nord-themed colors.
+A LazyVim-style which-key menu for tmux. Press a trigger key to open a discoverable, keyboard-driven native tmux menu with nested groups.
 
 ![Nord theme](https://img.shields.io/badge/theme-Nord-88C0D0?style=flat-square)
 ![tmux](https://img.shields.io/badge/tmux-3.3+-green?style=flat-square)
@@ -11,17 +11,16 @@ A LazyVim-style which-key popup for tmux. Press a trigger key to open a discover
 
 - **Discoverable keybindings** - see all available commands at a glance
 - **Nested groups** - organize commands hierarchically (git, window, session, etc.)
-- **Breadcrumb navigation** - always know where you are in the menu tree
-- **Nord color theme** - clean, readable color scheme using 24-bit true color
+- **Native tmux menus** - command selection and execution stay inside tmux's client and pane context
+- **Breadcrumb titles** - submenus show where you are in the menu tree
 - **JSON configuration** - easy to customize, extend, and share
 - **Five action types** - shell commands (with optional auto-execute), tmux commands, external scripts, popups, and nested groups
 - **Single-keystroke input** - no Enter key required, instant response
 
 ## Requirements
 
-- tmux >= 3.3 (for `display-popup` support)
+- tmux with `display-menu` support, and `display-popup` support for `popup` actions
 - `jq` (for JSON parsing)
-- A terminal with true color (24-bit) support
 
 ## Installation
 
@@ -57,13 +56,12 @@ tmux source-file ~/.tmux.conf
 
 ## Usage
 
-Press `prefix + Space` (default) to open the which-key popup.
+Press `prefix + Space` (default) to open the which-key menu.
 
 - **Press a key** to execute the corresponding command or enter a group
-- **Escape** to go back one level or close the menu
-- **Backspace** to go back one level or close the menu
+- **Escape** to close the current menu
 
-Groups are indicated by a `+` prefix and shown in cyan. Pressing a group key opens its submenu with a breadcrumb showing your navigation path.
+Groups are indicated with a `>` suffix. Pressing a group key opens its submenu with a breadcrumb title showing your navigation path.
 
 ## Configuration
 
@@ -75,19 +73,11 @@ Set these in your `~/.tmux.conf` before loading the plugin:
 |--------|---------|-------------|
 | `@which-key-trigger` | `Space` | Key binding (after prefix) to open the menu |
 | `@which-key-config` | _(auto-detected)_ | Path to a custom JSON config file |
-| `@which-key-popup-height` | `16` | Popup height in lines |
-| `@which-key-popup-width` | `100` | Popup width in characters |
-| `@which-key-popup-bg` | `#2E3440` | Popup background color |
-| `@which-key-popup-fg` | `#4C566A` | Popup border/foreground color |
-| `@which-key-popup-x` | `C` | Popup X position (`C` = centered) |
-| `@which-key-popup-y` | `S` | Popup Y position (`S` = status line) |
 
 Example:
 
 ```tmux
 set -g @which-key-config '~/.config/tmux-which-key/config.json'
-set -g @which-key-popup-height '20'
-set -g @which-key-popup-width '120'
 set -g @plugin 'Nucc/tmux-which-key'
 ```
 
@@ -102,13 +92,13 @@ To bind `Ctrl-Space` directly (no prefix needed):
 set -g @which-key-trigger 'None'
 
 # Bind Ctrl-Space directly (-n = no prefix)
-bind-key -n C-Space run-shell 'tmux display-popup -E -h 16 -w 100 -x C -y S -S "fg=#4C566A" -s "bg=#2E3440" "~/.tmux/plugins/tmux-which-key/scripts/which-key.sh --pane #{pane_id} --window #{window_id} --session #{session_id} --client #{client_name}"'
+bind-key -n C-Space run-shell '~/.tmux/plugins/tmux-which-key/scripts/which-key.sh --menu --pane #{pane_id} --window #{window_id} --session #{session_id} --client #{client_name}'
 ```
 
 To use a custom config with a manual binding:
 
 ```tmux
-bind-key -n C-Space run-shell 'tmux display-popup -E -h 16 -w 100 -x C -y S -S "fg=#4C566A" -s "bg=#2E3440" "~/.tmux/plugins/tmux-which-key/scripts/which-key.sh --config ~/.config/tmux-which-key/config.json --pane #{pane_id} --window #{window_id} --session #{session_id} --client #{client_name}"'
+bind-key -n C-Space run-shell '~/.tmux/plugins/tmux-which-key/scripts/which-key.sh --menu --config ~/.config/tmux-which-key/config.json --pane #{pane_id} --window #{window_id} --session #{session_id} --client #{client_name}'
 ```
 
 ### Custom Config File
