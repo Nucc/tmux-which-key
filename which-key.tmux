@@ -52,7 +52,7 @@ main() {
     popup_cmd+=" -h $popup_height -w $popup_width"
     popup_cmd+=" -x $popup_x -y $popup_y"
     popup_cmd+=" -S 'fg=$popup_fg' -s 'bg=$popup_bg'"
-    popup_cmd+=" '$CURRENT_DIR/scripts/which-key.sh $config_flag #{pane_id}'"
+    popup_cmd+=" '$CURRENT_DIR/scripts/which-key.sh $config_flag --pane #{pane_id} --window #{window_id} --session #{session_id} --client #{client_name}'"
 
     tmux bind-key "$trigger" run-shell "$popup_cmd"
 }

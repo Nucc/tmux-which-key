@@ -102,13 +102,13 @@ To bind `Ctrl-Space` directly (no prefix needed):
 set -g @which-key-trigger 'None'
 
 # Bind Ctrl-Space directly (-n = no prefix)
-bind-key -n C-Space run-shell 'tmux display-popup -E -h 16 -w 100 -x C -y S -S "fg=#4C566A" -s "bg=#2E3440" "~/.tmux/plugins/tmux-which-key/scripts/which-key.sh #{pane_id}"'
+bind-key -n C-Space run-shell 'tmux display-popup -E -h 16 -w 100 -x C -y S -S "fg=#4C566A" -s "bg=#2E3440" "~/.tmux/plugins/tmux-which-key/scripts/which-key.sh --pane #{pane_id} --window #{window_id} --session #{session_id} --client #{client_name}"'
 ```
 
 To use a custom config with a manual binding:
 
 ```tmux
-bind-key -n C-Space run-shell 'tmux display-popup -E -h 16 -w 100 -x C -y S -S "fg=#4C566A" -s "bg=#2E3440" "~/.tmux/plugins/tmux-which-key/scripts/which-key.sh --config ~/.config/tmux-which-key/config.json #{pane_id}"'
+bind-key -n C-Space run-shell 'tmux display-popup -E -h 16 -w 100 -x C -y S -S "fg=#4C566A" -s "bg=#2E3440" "~/.tmux/plugins/tmux-which-key/scripts/which-key.sh --config ~/.config/tmux-which-key/config.json --pane #{pane_id} --window #{window_id} --session #{session_id} --client #{client_name}"'
 ```
 
 ### Custom Config File
@@ -142,6 +142,15 @@ The config file is a JSON object with a top-level `items` array. Each item has:
 | `items` | array | for groups | Nested items in this group |
 | `immediate` | boolean | no | For `action` type: also press Enter after pasting (default: `false`) |
 
+Commands may use placeholders for the pane, window, session, and client that opened the menu. They are expanded before execution:
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{{pane_id}}` | Source pane ID |
+| `{{window_id}}` | Source window ID |
+| `{{session_id}}` | Source session ID |
+| `{{client_id}}` | Source client name |
+
 ### Action Types
 
 | Type | Behavior | Example |
@@ -172,8 +181,8 @@ The config file is a JSON object with a top-level `items` array. Each item has:
       "type": "group",
       "description": "window",
       "items": [
-        { "key": "v", "type": "tmux", "command": "split-window -h -c '#{pane_current_path}'", "description": "Split vertical" },
-        { "key": "s", "type": "tmux", "command": "split-window -v -c '#{pane_current_path}'", "description": "Split horizontal" }
+        { "key": "v", "type": "tmux", "command": "split-window -h -t {{pane_id}} -c '#{pane_current_path}'", "description": "Split vertical" },
+        { "key": "s", "type": "tmux", "command": "split-window -v -t {{pane_id}} -c '#{pane_current_path}'", "description": "Split horizontal" }
       ]
     },
     { "key": "r", "type": "tmux", "command": "source-file ~/.tmux.conf \\; display-message 'Config reloaded'", "description": "Reload config" },

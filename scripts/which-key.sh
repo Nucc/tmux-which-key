@@ -1,18 +1,37 @@
 #!/usr/bin/env bash
 # tmux-which-key - LazyVim-style which-key popup for tmux
-# Usage: which-key.sh [--config <path>] <pane_id>
+# Usage: which-key.sh [--config <path>] [--pane <pane_id>] [--window <window_id>] [--session <session_id>] [--client <client_id>]
 
 set -uo pipefail
 
 PLUGIN_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIG_FILE=""
 PANE_ID=""
+WINDOW_ID=""
+SESSION_ID=""
+CLIENT_ID=""
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --config)
             CONFIG_FILE="$2"
+            shift 2
+            ;;
+        --pane)
+            PANE_ID="$2"
+            shift 2
+            ;;
+        --window)
+            WINDOW_ID="$2"
+            shift 2
+            ;;
+        --session)
+            SESSION_ID="$2"
+            shift 2
+            ;;
+        --client)
+            CLIENT_ID="$2"
             shift 2
             ;;
         *)
@@ -44,8 +63,20 @@ C_HDR=$'\033[38;2;129;161;193m'       # #81A1C1 - blue
 C_R=$'\033[0m'
 
 if [[ -z "$PANE_ID" ]]; then
-    echo "Usage: which-key.sh [--config <path>] <pane_id>"
+    echo "Usage: which-key.sh [--config <path>] [--pane <pane_id>] [--window <window_id>] [--session <session_id>] [--client <client_id>]"
     exit 1
+fi
+
+if [[ -z "$WINDOW_ID" ]]; then
+    WINDOW_ID=$(tmux display-message -t "$PANE_ID" -p '#{window_id}')
+fi
+
+if [[ -z "$SESSION_ID" ]]; then
+    SESSION_ID=$(tmux display-message -t "$PANE_ID" -p '#{session_id}')
+fi
+
+if [[ -z "$CLIENT_ID" ]]; then
+    CLIENT_ID=$(tmux display-message -p '#{client_name}')
 fi
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
@@ -78,6 +109,25 @@ get_breadcrumb() {
     done
     local IFS=" > "
     echo "${parts[*]}"
+}
+
+expand_command() {
+    local command="$1"
+    command="${command//\{\{pane_id\}\}/$PANE_ID}"
+    command="${command//\{\{window_id\}\}/$WINDOW_ID}"
+    command="${command//\{\{session_id\}\}/$SESSION_ID}"
+    command="${command//\{\{client_id\}\}/$CLIENT_ID}"
+    echo "$command"
+}
+
+run_tmux_command() {
+    local command="$1"
+    local command_file
+    command="${command//\\;/;}"
+    command_file=$(mktemp "${TMPDIR:-/tmp}/tmux-which-key.XXXXXX") || return 1
+    printf '%s\n' "$command" > "$command_file"
+    tmux source-file "$command_file"
+    rm -f "$command_file"
 }
 
 render_menu() {
@@ -149,6 +199,7 @@ handle_key() {
 
     while IFS=$'\t' read -r key type desc command immediate; do
         if [[ "$key" == "$keypress" ]]; then
+            command=$(expand_command "$command")
             case "$type" in
                 group)
                     NAV_STACK+=("$i")
@@ -164,16 +215,22 @@ handle_key() {
                 popup)
                     local pane_path
                     pane_path=$(tmux display-message -t "$PANE_ID" -p '#{pane_current_path}')
-                    tmux run-shell -b "sleep 0.1 && tmux display-popup -E -h 80% -w 80% -d '$pane_path' '$command'"
+                    (
+                        sleep 0.1
+                        tmux display-popup -E -h 80% -w 80% -d "$pane_path" "$command"
+                    ) &
                     exit 0
                     ;;
                 tmux)
                     case "$command" in
                         choose-*|command-prompt*|customize-mode*|copy-mode*)
-                            tmux run-shell -b "sleep 0.1 && tmux $command"
+                            (
+                                sleep 0.1
+                                run_tmux_command "$command"
+                            ) &
                             ;;
                         *)
-                            tmux $command
+                            run_tmux_command "$command"
                             ;;
                     esac
                     exit 0
