@@ -1,6 +1,6 @@
 # tmux-which-key
 
-A LazyVim-style which-key popup for tmux. Press a trigger key to open a discoverable, keyboard-driven command menu with nested groups, breadcrumb navigation, and Nord-themed colors.
+A LazyVim-style which-key popup for tmux. Press a trigger key to open a discoverable, keyboard-driven command menu with nested groups.
 
 ![Nord theme](https://img.shields.io/badge/theme-Nord-88C0D0?style=flat-square)
 ![tmux](https://img.shields.io/badge/tmux-3.3+-green?style=flat-square)
@@ -11,17 +11,19 @@ A LazyVim-style which-key popup for tmux. Press a trigger key to open a discover
 
 - **Discoverable keybindings** - see all available commands at a glance
 - **Nested groups** - organize commands hierarchically (git, window, session, etc.)
+- **Popup UI by default** - a compact shell-rendered menu with Nord colors
+- **Native tmux fallback** - switch to tmux `display-menu` when you want tmux-managed menu behavior
 - **Breadcrumb navigation** - always know where you are in the menu tree
-- **Nord color theme** - clean, readable color scheme using 24-bit true color
 - **JSON configuration** - easy to customize, extend, and share
 - **Five action types** - shell commands (with optional auto-execute), tmux commands, external scripts, popups, and nested groups
 - **Single-keystroke input** - no Enter key required, instant response
 
 ## Requirements
 
-- tmux >= 3.3 (for `display-popup` support)
+- tmux >= 3.3 with `display-popup` support
+- tmux with `display-menu` support for `@which-key-mode native`
 - `jq` (for JSON parsing)
-- A terminal with true color (24-bit) support
+- A terminal with true color (24-bit) support for popup mode colors
 
 ## Installation
 
@@ -65,6 +67,12 @@ Press `prefix + Space` (default) to open the which-key popup.
 
 Groups are indicated by a `+` prefix and shown in cyan. Pressing a group key opens its submenu with a breadcrumb showing your navigation path.
 
+After updating the plugin, reload your tmux configuration so the key binding is rebuilt:
+
+```bash
+tmux source-file ~/.tmux.conf
+```
+
 ## Configuration
 
 ### Tmux Options
@@ -74,6 +82,7 @@ Set these in your `~/.tmux.conf` before loading the plugin:
 | Option | Default | Description |
 |--------|---------|-------------|
 | `@which-key-trigger` | `Space` | Key binding (after prefix) to open the menu |
+| `@which-key-mode` | `popup` | Menu backend: `popup` or `native` |
 | `@which-key-config` | _(auto-detected)_ | Path to a custom JSON config file |
 | `@which-key-popup-height` | `16` | Popup height in lines |
 | `@which-key-popup-width` | `100` | Popup width in characters |
@@ -91,6 +100,12 @@ set -g @which-key-popup-width '120'
 set -g @plugin 'Nucc/tmux-which-key'
 ```
 
+To use tmux's native `display-menu` backend instead of the popup UI:
+
+```tmux
+set -g @which-key-mode 'native'
+```
+
 ### Custom Key Binding
 
 By default the plugin binds `prefix + Space`. You can override this with `@which-key-trigger`, or create your own binding entirely in `~/.tmux.conf`.
@@ -102,13 +117,13 @@ To bind `Ctrl-Space` directly (no prefix needed):
 set -g @which-key-trigger 'None'
 
 # Bind Ctrl-Space directly (-n = no prefix)
-bind-key -n C-Space run-shell 'tmux display-popup -E -h 16 -w 100 -x C -y S -S "fg=#4C566A" -s "bg=#2E3440" "~/.tmux/plugins/tmux-which-key/scripts/which-key.sh #{pane_id}"'
+bind-key -n C-Space run-shell 'tmux display-popup -E -h 16 -w 100 -x C -y S -S "fg=#4C566A" -s "bg=#2E3440" "~/.tmux/plugins/tmux-which-key/scripts/which-key.sh --pane #{pane_id} --window #{window_id} --session #{session_id} --client #{client_name}"'
 ```
 
 To use a custom config with a manual binding:
 
 ```tmux
-bind-key -n C-Space run-shell 'tmux display-popup -E -h 16 -w 100 -x C -y S -S "fg=#4C566A" -s "bg=#2E3440" "~/.tmux/plugins/tmux-which-key/scripts/which-key.sh --config ~/.config/tmux-which-key/config.json #{pane_id}"'
+bind-key -n C-Space run-shell 'tmux display-popup -E -h 16 -w 100 -x C -y S -S "fg=#4C566A" -s "bg=#2E3440" "~/.tmux/plugins/tmux-which-key/scripts/which-key.sh --config ~/.config/tmux-which-key/config.json --pane #{pane_id} --window #{window_id} --session #{session_id} --client #{client_name}"'
 ```
 
 ### Custom Config File
@@ -142,6 +157,15 @@ The config file is a JSON object with a top-level `items` array. Each item has:
 | `items` | array | for groups | Nested items in this group |
 | `immediate` | boolean | no | For `action` type: also press Enter after pasting (default: `false`) |
 
+Commands may use placeholders for the pane, window, session, and client that opened the menu. They are expanded before execution:
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{{pane_id}}` | Source pane ID |
+| `{{window_id}}` | Source window ID |
+| `{{session_id}}` | Source session ID |
+| `{{client_id}}` | Source client name |
+
 ### Action Types
 
 | Type | Behavior | Example |
@@ -172,8 +196,8 @@ The config file is a JSON object with a top-level `items` array. Each item has:
       "type": "group",
       "description": "window",
       "items": [
-        { "key": "v", "type": "tmux", "command": "split-window -h -c '#{pane_current_path}'", "description": "Split vertical" },
-        { "key": "s", "type": "tmux", "command": "split-window -v -c '#{pane_current_path}'", "description": "Split horizontal" }
+        { "key": "v", "type": "tmux", "command": "split-window -h -t {{pane_id}} -c '#{pane_current_path}'", "description": "Split vertical" },
+        { "key": "s", "type": "tmux", "command": "split-window -v -t {{pane_id}} -c '#{pane_current_path}'", "description": "Split horizontal" }
       ]
     },
     { "key": "r", "type": "tmux", "command": "source-file ~/.tmux.conf \\; display-message 'Config reloaded'", "description": "Reload config" },

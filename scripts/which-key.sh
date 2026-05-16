@@ -1,18 +1,47 @@
 #!/usr/bin/env bash
-# tmux-which-key - LazyVim-style which-key popup for tmux
-# Usage: which-key.sh [--config <path>] <pane_id>
+# tmux-which-key - LazyVim-style which-key menu for tmux
+# Usage: which-key.sh [--menu] [--path <jq-path>] [--config <path>] [--pane <pane_id>] [--window <window_id>] [--session <session_id>] [--client <client_id>]
 
 set -uo pipefail
 
 PLUGIN_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIG_FILE=""
 PANE_ID=""
+WINDOW_ID=""
+SESSION_ID=""
+CLIENT_ID=""
+MENU_MODE=false
+MENU_PATH=".items"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --config)
             CONFIG_FILE="$2"
+            shift 2
+            ;;
+        --pane)
+            PANE_ID="$2"
+            shift 2
+            ;;
+        --window)
+            WINDOW_ID="$2"
+            shift 2
+            ;;
+        --session)
+            SESSION_ID="$2"
+            shift 2
+            ;;
+        --client)
+            CLIENT_ID="$2"
+            shift 2
+            ;;
+        --menu)
+            MENU_MODE=true
+            shift
+            ;;
+        --path)
+            MENU_PATH="$2"
             shift 2
             ;;
         *)
@@ -44,8 +73,20 @@ C_HDR=$'\033[38;2;129;161;193m'       # #81A1C1 - blue
 C_R=$'\033[0m'
 
 if [[ -z "$PANE_ID" ]]; then
-    echo "Usage: which-key.sh [--config <path>] <pane_id>"
+    echo "Usage: which-key.sh [--menu] [--path <jq-path>] [--config <path>] [--pane <pane_id>] [--window <window_id>] [--session <session_id>] [--client <client_id>]"
     exit 1
+fi
+
+if [[ -z "$WINDOW_ID" ]]; then
+    WINDOW_ID=$(tmux display-message -t "$PANE_ID" -p '#{window_id}')
+fi
+
+if [[ -z "$SESSION_ID" ]]; then
+    SESSION_ID=$(tmux display-message -t "$PANE_ID" -p '#{session_id}')
+fi
+
+if [[ -z "$CLIENT_ID" ]]; then
+    CLIENT_ID=$(tmux display-message -p '#{client_name}')
 fi
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
@@ -59,25 +100,171 @@ CONFIG=$(cat "$CONFIG_FILE")
 # Navigation stack (jq path indices)
 NAV_STACK=()
 
+get_current_path() {
+    local path="$MENU_PATH"
+    if [[ "$MENU_MODE" != true ]]; then
+        path=".items"
+        for idx in "${NAV_STACK[@]}"; do
+            path="${path}[${idx}].items"
+        done
+    fi
+    echo "$path"
+}
+
 # Get current items as tab-separated lines: key\ttype\tdescription\tcommand\timmediate
 # Single jq call per menu level instead of per-item
 get_current_items() {
-    local path=".items"
-    for idx in "${NAV_STACK[@]}"; do
-        path="${path}[${idx}].items"
-    done
-    echo "$CONFIG" | jq -r "${path}[] | [.key, .type, .description, (.command // \"\"), (if .immediate then \"true\" else \"false\" end)] | @tsv" 2>/dev/null
+    local path
+    path=$(get_current_path)
+    echo "$CONFIG" | jq -r "${path}[]? | [.key, .type, .description, (.command // \"\"), (if .immediate then \"true\" else \"false\" end)] | @tsv" 2>/dev/null
 }
 
 get_breadcrumb() {
     local path=".items"
     local parts=("root")
-    for idx in "${NAV_STACK[@]}"; do
+    local active_path
+    active_path=$(get_current_path)
+
+    while [[ "$path" != "$active_path" ]]; do
+        local idx
+        idx="${active_path#"$path["}"
+        idx="${idx%%]*}"
+        [[ "$idx" == "$active_path" || -z "$idx" ]] && break
         parts+=("$(echo "$CONFIG" | jq -r "${path}[${idx}].description")")
         path="${path}[${idx}].items"
     done
-    local IFS=" > "
-    echo "${parts[*]}"
+
+    local breadcrumb="${parts[0]}"
+    local i
+    for ((i = 1; i < ${#parts[@]}; i++)); do
+        breadcrumb+=" > ${parts[$i]}"
+    done
+    echo "$breadcrumb"
+}
+
+expand_command() {
+    local command="$1"
+    command="${command//\{\{pane_id\}\}/$PANE_ID}"
+    command="${command//\{\{window_id\}\}/$WINDOW_ID}"
+    command="${command//\{\{session_id\}\}/$SESSION_ID}"
+    command="${command//\{\{client_id\}\}/$CLIENT_ID}"
+    echo "$command"
+}
+
+shell_quote() {
+    local value="$1"
+    printf "'%s'" "${value//\'/\'\\\'\'}"
+}
+
+menu_command_prefix() {
+    local path="$1"
+    local script_path quoted_script quoted_config quoted_path quoted_pane quoted_window quoted_session quoted_client
+
+    script_path="$PLUGIN_DIR/scripts/which-key.sh"
+    quoted_script=$(shell_quote "$script_path")
+    quoted_path=$(shell_quote "$path")
+    quoted_pane=$(shell_quote "$PANE_ID")
+    quoted_window=$(shell_quote "$WINDOW_ID")
+    quoted_session=$(shell_quote "$SESSION_ID")
+    quoted_client=$(shell_quote "$CLIENT_ID")
+
+    printf "%s --menu --path %s" "$quoted_script" "$quoted_path"
+    if [[ -n "$CONFIG_FILE" ]]; then
+        quoted_config=$(shell_quote "$CONFIG_FILE")
+        printf " --config %s" "$quoted_config"
+    fi
+    printf " --pane %s --window %s --session %s --client %s" "$quoted_pane" "$quoted_window" "$quoted_session" "$quoted_client"
+}
+
+build_menu_command() {
+    local index="$1"
+    local type="$2"
+    local command="$3"
+    local immediate="$4"
+    local current_path next_path pane_path
+    local quoted_command quoted_pane_path
+
+    command=$(expand_command "$command")
+
+    case "$type" in
+        group)
+            current_path=$(get_current_path)
+            next_path="${current_path}[${index}].items"
+            printf "run-shell %s" "$(shell_quote "$(menu_command_prefix "$next_path")")"
+            ;;
+        action)
+            quoted_command=$(shell_quote "$command")
+            printf "send-keys -t %s -l %s" "$PANE_ID" "$quoted_command"
+            if [[ "$immediate" == "true" ]]; then
+                printf " \\; send-keys -t %s Enter" "$PANE_ID"
+            fi
+            ;;
+        popup)
+            pane_path=$(tmux display-message -t "$PANE_ID" -p '#{pane_current_path}')
+            quoted_command=$(shell_quote "$command")
+            quoted_pane_path=$(shell_quote "$pane_path")
+            printf "display-popup -E -h 80%% -w 80%% -d %s %s" "$quoted_pane_path" "$quoted_command"
+            ;;
+        tmux)
+            printf "%s" "$command"
+            ;;
+        script)
+            quoted_command=$(shell_quote "$command")
+            printf "run-shell %s" "$quoted_command"
+            ;;
+        *)
+            printf "display-message -t %s %s" "$PANE_ID" "$(shell_quote "Unsupported which-key item type: $type")"
+            ;;
+    esac
+}
+
+show_native_menu() {
+    local breadcrumb key type desc command immediate label menu_command
+    local i=0
+    local menu_args=()
+
+    breadcrumb=$(get_breadcrumb)
+    menu_args=(display-menu -c "$CLIENT_ID" -t "$PANE_ID" -T "Which Key | $breadcrumb")
+
+    while IFS=$'\t' read -r key type desc command immediate; do
+        label="$desc"
+        if [[ "$type" == "group" ]]; then
+            label="$desc >"
+        fi
+        menu_command=$(build_menu_command "$i" "$type" "$command" "$immediate")
+        menu_args+=("$label" "$key" "$menu_command")
+        ((i++))
+    done < <(get_current_items)
+
+    if [[ $i -eq 0 ]]; then
+        tmux display-message -t "$PANE_ID" "which-key: empty menu"
+        exit 0
+    fi
+
+    tmux "${menu_args[@]}"
+}
+
+write_tmux_command_file() {
+    local command="$1"
+    local command_file
+    command="${command//\\;/;}"
+    command_file=$(mktemp "${TMPDIR:-/tmp}/tmux-which-key.XXXXXX") || return 1
+    printf '%s\n' "$command" > "$command_file"
+    echo "$command_file"
+}
+
+run_tmux_command() {
+    local command_file
+    command_file=$(write_tmux_command_file "$1") || return 1
+    tmux source-file "$command_file"
+    rm -f "$command_file"
+}
+
+run_tmux_command_delayed() {
+    local command_file quoted_file
+    command_file=$(write_tmux_command_file "$1") || return 1
+    quoted_file=$(shell_quote "$command_file")
+    tmux run-shell -b "sleep 0.1; tmux source-file $quoted_file; rm -f $quoted_file"
 }
 
 render_menu() {
@@ -149,6 +336,7 @@ handle_key() {
 
     while IFS=$'\t' read -r key type desc command immediate; do
         if [[ "$key" == "$keypress" ]]; then
+            command=$(expand_command "$command")
             case "$type" in
                 group)
                     NAV_STACK+=("$i")
@@ -163,17 +351,21 @@ handle_key() {
                     ;;
                 popup)
                     local pane_path
+                    local quoted_command
+                    local quoted_pane_path
                     pane_path=$(tmux display-message -t "$PANE_ID" -p '#{pane_current_path}')
-                    tmux run-shell -b "sleep 0.1 && tmux display-popup -E -h 80% -w 80% -d '$pane_path' '$command'"
+                    quoted_command=$(shell_quote "$command")
+                    quoted_pane_path=$(shell_quote "$pane_path")
+                    tmux run-shell -b "sleep 0.1; tmux display-popup -E -h 80% -w 80% -d $quoted_pane_path $quoted_command"
                     exit 0
                     ;;
                 tmux)
                     case "$command" in
-                        choose-*|command-prompt*|customize-mode*|copy-mode*)
-                            tmux run-shell -b "sleep 0.1 && tmux $command"
+                        choose-*|command-prompt*|confirm-before*|customize-mode*|copy-mode*|clock-mode*|display-panes*|*display-message*)
+                            run_tmux_command_delayed "$command"
                             ;;
                         *)
-                            tmux $command
+                            run_tmux_command "$command"
                             ;;
                     esac
                     exit 0
@@ -187,6 +379,11 @@ handle_key() {
         ((i++))
     done < <(get_current_items)
 }
+
+if [[ "$MENU_MODE" == true ]]; then
+    show_native_menu
+    exit 0
+fi
 
 # Main loop
 while true; do
